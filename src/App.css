@@ -948,7 +948,7 @@ footer p {
 
 /* LOGIN MOBILE */
 
-@media (max-width: 800px) {
+@media (max-width: 600px) {
 
   .auth-page {
     grid-template-columns: 1fr;
@@ -1036,4 +1036,3 @@ footer p {
   position: relative;
   z-index: 2;
 }
-

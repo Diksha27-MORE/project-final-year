@@ -1,33 +1,150 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import './Profile.css'
+import {
+  getCurrentUser,
+  updateCurrentUser,
+  getCurrentUserHistory,
+  getTargetRole,
+  getUserSkills,
+  normalizeSkills,
+} from '../utils/userSession'
+
+/* =========================================================
+   SUGGESTED TARGET ROLES
+   (free text is still allowed — this is only a datalist)
+========================================================= */
+
+const ROLE_SUGGESTIONS = [
+  'Data Scientist',
+  'Data Analyst',
+  'Data Engineer',
+  'Machine Learning Engineer',
+  'AI Engineer',
+  'Frontend Developer',
+  'Backend Developer',
+  'Full Stack Developer',
+  'Software Engineer',
+  'Android Developer',
+  'DevOps Engineer',
+  'Business Analyst',
+]
+
+/* =========================================================
+   INLINE STYLES
+   Used so no new Profile.css rules are required.
+========================================================= */
+
+const chipRowStyle = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '8px',
+  marginTop: '4px',
+}
+
+const chipStyle = {
+  padding: '6px 11px',
+  borderRadius: '999px',
+  background: '#eef4ff',
+  border: '1px solid #dbe7ff',
+  color: '#2563eb',
+  fontSize: '12px',
+  fontWeight: 600,
+}
+
+const hintStyle = {
+  display: 'block',
+  marginTop: '6px',
+  color: '#98a2b3',
+  fontSize: '11.5px',
+  lineHeight: 1.5,
+}
+
+const emptyValueStyle = {
+  color: '#98a2b3',
+  fontWeight: 500,
+}
 
 function Profile() {
-  const savedProfile = JSON.parse(
-    localStorage.getItem('interntrust_profile') || 'null'
-  )
+  const navigate = useNavigate()
 
-  const defaultProfile = {
-    name: 'Swarangi Kadam',
-    role: 'Student',
-    email: 'user@example.com',
-  }
-
-  const [profile, setProfile] = useState(
-    savedProfile || defaultProfile
-  )
-
+  const [profile, setProfile] = useState(() => getCurrentUser())
   const [editing, setEditing] = useState(false)
-  const [draftProfile, setDraftProfile] = useState(profile)
+
+  const [draftProfile, setDraftProfile] = useState(() => {
+    const user = getCurrentUser()
+
+    return {
+      name: user?.name || '',
+      role: user?.role || 'Student',
+      email: user?.email || '',
+      target_role: getTargetRole(user),
+      skillsText: getUserSkills(user).join(', '),
+      location: user?.location || '',
+    }
+  })
+
+  /* ================= AUTH GUARD ================= */
+
+  useEffect(() => {
+    if (!getCurrentUser()) {
+      navigate('/login')
+    }
+  }, [navigate])
+
+  /* ================= DERIVED VALUES ================= */
+
+  const displayName = profile?.name || ''
+
+  const initials = useMemo(() => {
+    const source =
+      displayName ||
+      profile?.email?.split('@')[0] ||
+      'IT'
+
+    return source
+      .split(' ')
+      .filter(Boolean)
+      .map((word) => word[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
+  }, [displayName, profile])
+
+  const targetRole = getTargetRole(profile)
+
+  const skills = getUserSkills(profile)
+
+  /* ================= REAL ACTIVITY STATS ================= */
+
+  const history = getCurrentUserHistory()
+
+  const totalChecks = history.length
+
+  const safeChecks = history.filter(
+    (item) =>
+      String(item.riskLevel || '').toLowerCase() === 'low'
+  ).length
+
+  const riskChecks = Math.max(totalChecks - safeChecks, 0)
+
+  /* ================= EDIT HANDLERS ================= */
 
   const handleEdit = () => {
-    setDraftProfile(profile)
+    setDraftProfile({
+      name: profile?.name || '',
+      role: profile?.role || 'Student',
+      email: profile?.email || '',
+      target_role: getTargetRole(profile),
+      skillsText: getUserSkills(profile).join(', '),
+      location: profile?.location || '',
+    })
+
     setEditing(true)
   }
 
   const handleCancel = () => {
-    setDraftProfile(profile)
     setEditing(false)
   }
 
@@ -39,14 +156,24 @@ function Profile() {
   }
 
   const handleSave = () => {
-    setProfile(draftProfile)
+    const updated = updateCurrentUser({
+      name: draftProfile.name,
+      role: draftProfile.role,
+      email: draftProfile.email,
+      target_role: String(draftProfile.target_role || '').trim(),
+      skills: normalizeSkills(draftProfile.skillsText),
+      location: draftProfile.location,
+    })
 
-    localStorage.setItem(
-      'interntrust_profile',
-      JSON.stringify(draftProfile)
-    )
+    if (updated) {
+      setProfile(updated)
+    }
 
     setEditing(false)
+  }
+
+  if (!profile) {
+    return null
   }
 
   return (
@@ -85,19 +212,17 @@ function Profile() {
         <section className="profile-hero">
 
           <div className="profile-avatar">
-  {profile.name
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()}
-</div>
+            {initials}
+          </div>
 
           <div className="profile-identity">
 
-            <h2>{profile.name}</h2>
+            <h2>{displayName || 'InternTrust Member'}</h2>
 
-<p>{profile.role} • InternTrust Member</p>
+            <p>
+              {profile.role} • InternTrust Member
+            </p>
+
             <span className="profile-member">
               <span className="mini-shield">✓</span>
               Verified account
@@ -107,34 +232,34 @@ function Profile() {
 
           <div className="profile-actions">
 
-  {!editing ? (
-    <button
-      className="profile-edit-button"
-      onClick={handleEdit}
-    >
-      <span>✎</span>
-      Edit Profile
-    </button>
-  ) : (
-    <>
-      <button
-        className="profile-cancel-button"
-        onClick={handleCancel}
-      >
-        Cancel
-      </button>
+            {!editing ? (
+              <button
+                className="profile-edit-button"
+                onClick={handleEdit}
+              >
+                <span>✎</span>
+                Edit Profile
+              </button>
+            ) : (
+              <>
+                <button
+                  className="profile-cancel-button"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
 
-      <button
-        className="profile-save-button"
-        onClick={handleSave}
-      >
-        <span>✓</span>
-        Save Changes
-      </button>
-    </>
-  )}
+                <button
+                  className="profile-save-button"
+                  onClick={handleSave}
+                >
+                  <span>✓</span>
+                  Save Changes
+                </button>
+              </>
+            )}
 
-</div>
+          </div>
 
         </section>
 
@@ -173,88 +298,260 @@ function Profile() {
 
             <div className="profile-fields">
 
-  <div className="profile-field">
+              <div className="profile-field">
 
-    <span className="field-label">
-      Full name
-    </span>
+                <span className="field-label">
+                  Full name
+                </span>
 
-    {editing ? (
-      <input
-        className="profile-edit-input"
-        type="text"
-        value={draftProfile.name}
-        onChange={(e) =>
-          handleChange('name', e.target.value)
-        }
-      />
-    ) : (
-      <strong>{profile.name}</strong>
-    )}
+                {editing ? (
+                  <input
+                    className="profile-edit-input"
+                    type="text"
+                    value={draftProfile.name}
+                    onChange={(e) =>
+                      handleChange('name', e.target.value)
+                    }
+                  />
+                ) : (
+                  <strong>{profile.name}</strong>
+                )}
 
-  </div>
-
-
-  <div className="profile-field">
-
-    <span className="field-label">
-      Role
-    </span>
-
-    {editing ? (
-      <select
-        className="profile-edit-input"
-        value={draftProfile.role}
-        onChange={(e) =>
-          handleChange('role', e.target.value)
-        }
-      >
-        <option value="Student">Student</option>
-        <option value="Graduate">Graduate</option>
-        <option value="Job Seeker">Job Seeker</option>
-      </select>
-    ) : (
-      <strong>{profile.role}</strong>
-    )}
-
-  </div>
+              </div>
 
 
-  <div className="profile-field">
+              <div className="profile-field">
 
-    <span className="field-label">
-      Email address
-    </span>
+                <span className="field-label">
+                  Account type
+                </span>
 
-    {editing ? (
-      <input
-        className="profile-edit-input"
-        type="email"
-        value={draftProfile.email}
-        onChange={(e) =>
-          handleChange('email', e.target.value)
-        }
-      />
-    ) : (
-      <strong>{profile.email}</strong>
-    )}
+                {editing ? (
+                  <select
+                    className="profile-edit-input"
+                    value={draftProfile.role}
+                    onChange={(e) =>
+                      handleChange('role', e.target.value)
+                    }
+                  >
+                    <option value="Student">Student</option>
+                    <option value="Graduate">Graduate</option>
+                    <option value="Job Seeker">Job Seeker</option>
+                  </select>
+                ) : (
+                  <strong>{profile.role}</strong>
+                )}
 
-  </div>
+              </div>
 
 
-  <div className="profile-field">
+              <div className="profile-field">
 
-    <span className="field-label">
-      Account type
-    </span>
+                <span className="field-label">
+                  Email address
+                </span>
 
-    <strong>
-      {profile.role} account
-    </strong>
+                {editing ? (
+                  <input
+                    className="profile-edit-input"
+                    type="email"
+                    value={draftProfile.email}
+                    onChange={(e) =>
+                      handleChange('email', e.target.value)
+                    }
+                  />
+                ) : (
+                  <strong>{profile.email}</strong>
+                )}
 
-  </div>
+              </div>
 
-</div>
+
+              <div className="profile-field">
+
+                <span className="field-label">
+                  Preferred location
+                </span>
+
+                {editing ? (
+                  <input
+                    className="profile-edit-input"
+                    type="text"
+                    placeholder="India"
+                    value={draftProfile.location}
+                    onChange={(e) =>
+                      handleChange('location', e.target.value)
+                    }
+                  />
+                ) : (
+                  <strong>
+                    {profile.location || (
+                      <span style={emptyValueStyle}>
+                        Not set
+                      </span>
+                    )}
+                  </strong>
+                )}
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          {/* ================= CAREER GOAL =================
+              This is the card the Dashboard depends on.
+          ================================================= */}
+
+          <section className="profile-card career-card">
+
+            <div className="card-heading">
+
+              <div className="card-icon purple">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <circle cx="12" cy="12" r="8" />
+                  <circle cx="12" cy="12" r="3.4" />
+                  <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                </svg>
+              </div>
+
+              <div>
+                <h3>Career goal</h3>
+                <p>
+                  Powers your job recommendations and skill gap
+                </p>
+              </div>
+
+            </div>
+
+
+            <div className="profile-fields">
+
+              <div className="profile-field">
+
+                <span className="field-label">
+                  Target role
+                </span>
+
+                {editing ? (
+                  <>
+                    <input
+                      className="profile-edit-input"
+                      type="text"
+                      list="target-role-options"
+                      placeholder="e.g. Data Scientist"
+                      value={draftProfile.target_role}
+                      onChange={(e) =>
+                        handleChange(
+                          'target_role',
+                          e.target.value
+                        )
+                      }
+                    />
+
+                    <datalist id="target-role-options">
+                      {ROLE_SUGGESTIONS.map((role) => (
+                        <option key={role} value={role} />
+                      ))}
+                    </datalist>
+
+                    <small style={hintStyle}>
+                      The job title you are working towards.
+                      This is different from your account type.
+                    </small>
+                  </>
+                ) : (
+                  <strong>
+                    {targetRole || (
+                      <span style={emptyValueStyle}>
+                        Not set — add one to unlock recommendations
+                      </span>
+                    )}
+                  </strong>
+                )}
+
+              </div>
+
+
+              <div className="profile-field">
+
+                <span className="field-label">
+                  Current skills
+                </span>
+
+                {editing ? (
+                  <>
+                    <textarea
+                      className="profile-edit-input"
+                      rows={3}
+                      placeholder="Python, SQL, Pandas, Machine Learning"
+                      value={draftProfile.skillsText}
+                      onChange={(e) =>
+                        handleChange(
+                          'skillsText',
+                          e.target.value
+                        )
+                      }
+                    />
+
+                    <small style={hintStyle}>
+                      Separate each skill with a comma.
+                    </small>
+                  </>
+                ) : skills.length ? (
+                  <div style={chipRowStyle}>
+                    {skills.map((skill) => (
+                      <span key={skill} style={chipStyle}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <strong>
+                    <span style={emptyValueStyle}>
+                      No skills added yet
+                    </span>
+                  </strong>
+                )}
+
+              </div>
+
+
+              <div className="profile-field">
+
+                <span className="field-label">
+                  Recommendation status
+                </span>
+
+                <strong>
+                  {targetRole
+                    ? `Active for ${targetRole}`
+                    : 'Waiting for a target role'}
+                </strong>
+
+              </div>
+
+            </div>
+
+
+            {!editing && (
+              <Link
+                to="/dashboard"
+                className="activity-link"
+              >
+                View my recommendations
+                <span>→</span>
+              </Link>
+            )}
+
           </section>
 
 
@@ -351,17 +648,17 @@ function Profile() {
             <div className="activity-stats">
 
               <div className="activity-stat">
-                <strong>24</strong>
+                <strong>{totalChecks}</strong>
                 <span>Total checks</span>
               </div>
 
               <div className="activity-stat">
-                <strong>18</strong>
+                <strong>{safeChecks}</strong>
                 <span>Safe opportunities</span>
               </div>
 
               <div className="activity-stat">
-                <strong>6</strong>
+                <strong>{riskChecks}</strong>
                 <span>Potential risks</span>
               </div>
 

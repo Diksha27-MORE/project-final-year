@@ -155,6 +155,19 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+.interntrust-create-account {
+  margin-top: 20px;
+  padding: 12px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.interntrust-create-account:hover {
+  border-color: rgba(255, 255, 255, 0.75);
+  background: rgba(0, 0, 0, 0.32);
+}
+
 .interntrust-explore-arrow {
   font-size: 14px;
   display: inline-block;

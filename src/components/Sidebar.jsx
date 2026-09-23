@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import './Sidebar.css'
+import { clearCurrentUser } from '../utils/userSession'
 
 function Sidebar({ activePage }) {
   return (
@@ -56,8 +57,8 @@ function Sidebar({ activePage }) {
           </div>
         </div>
 
-        <Link to="/" className="logout-link">
-          ← Back to website
+        <Link to="/login" className="logout-link" onClick={clearCurrentUser}>
+          ← Logout
         </Link>
 
       </div>

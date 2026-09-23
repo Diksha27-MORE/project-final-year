@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 
 import '../App.css'
 import './Home.css'
@@ -247,6 +248,16 @@ function Home() {
               ↓
             </span>
           </a>
+
+          <Link
+            to="/register"
+            className="interntrust-explore interntrust-create-account"
+          >
+            Create Account
+            <span className="interntrust-explore-arrow">
+              →
+            </span>
+          </Link>
 
         </div>
 

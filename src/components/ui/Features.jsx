@@ -200,8 +200,8 @@ export default function Features() {
           });
         });
 
-        gsap.set(titleRefs.map((r) => r.current), { opacity: 0 });
-        gsap.set(labelRefs.map((r) => r.current), { opacity: 0 });
+        gsap.set(titleRefs.filter((r) => r.current).map((r) => r.current), { opacity: 0 });
+        gsap.set(labelRefs.filter((r) => r.current).map((r) => r.current), { opacity: 0 });
 
         CARDS.forEach((_, i) => renderTyped(i, 0));
       };
@@ -363,7 +363,7 @@ export default function Features() {
     >
       <div ref={stickyRef} className="cts-sticky">
         <h1 ref={headlineRef} className="cts-headline">
-          Everything you need before you apply.
+          What You Get.!
         </h1>
 
         {CARDS.map((card, i) => (

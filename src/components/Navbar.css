@@ -1089,3 +1089,17 @@
     0 8px 25px rgba(0, 0, 0, 0.5),
     0 0 18px rgba(59, 130, 246, 0.15);
 }
+/* =========================================================
+   HIDE NAVBAR OUTSIDE HERO
+   ========================================================= */
+
+.interntrust-floating-navbar.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-20px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease,
+    visibility 0.35s ease;
+}

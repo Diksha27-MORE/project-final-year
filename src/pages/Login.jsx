@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { cva } from 'class-variance-authority'
 import './Login.css'
@@ -16,32 +16,14 @@ import {
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
+import { loginUser } from '../utils/userSession'
 
-
-/* -------------------------------------------------------------------------
- * TODO(auth): wire this up to your real authentication logic.
- * Replace the body of `loginRequest` with your actual API call / auth
- * context call, e.g.:
- *
- *   import { useAuth } from '../context/AuthContext'
- *   const { login } = useAuth()
- *   await login(email, password)
- *
- * or a direct API call:
- *
- *   const res = await fetch('/api/auth/login', {
- *     method: 'POST',
- *     headers: { 'Content-Type': 'application/json' },
- *     body: JSON.stringify({ email, password }),
- *   })
- *   if (!res.ok) throw new Error((await res.json()).message || 'Login failed')
- *   return res.json()
- *
- * Throwing an Error here surfaces its message in the error modal below.
- * ---------------------------------------------------------------------- */
 async function loginRequest(email, password) {
-  await new Promise((resolve) => setTimeout(resolve, 900))
-  return { email }
+  const result = await loginUser({ email, password })
+  if (!result.success) {
+    throw new Error(result.error)
+  }
+  return result.user
 }
 
 /* --- confetti burst, fired on successful login --- */
@@ -155,15 +137,6 @@ const GoogleIcon = (props) => (
   </svg>
 )
 
-const GitHubIcon = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" className="oauth-icon">
-    <path
-      fill="currentColor"
-      d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-    />
-  </svg>
-)
-
 /* --- ambient blurred-blob background --- */
 const GradientBackground = () => (
   <svg
@@ -269,7 +242,7 @@ function Login() {
     try {
       await loginRequest(email, password)
       fireConfetti()
-      setModalStatus('success')
+      navigate('/dashboard')
     } catch (err) {
       setModalErrorMessage(err?.message || 'Something went wrong. Please try again.')
       setModalStatus('error')
@@ -283,7 +256,7 @@ function Login() {
     }
   }, [authStep])
 
-  const Modal = () => (
+  const modal = (
     <AnimatePresence>
       {modalStatus !== 'closed' && (
         <motion.div
@@ -347,7 +320,7 @@ function Login() {
   return (
     <div className="auth-page">
       <Confetti ref={confettiRef} className="auth-confetti" />
-      <Modal />
+      {modal}
 
       <Link to="/" className="auth-back-home">
         ← Back to home
@@ -525,7 +498,7 @@ function Login() {
                       <div
                         className={`glass-input-action ${isPasswordValid ? 'is-visible' : ''}`}
                       >
-                        <GlassButton type="submit" size="icon" aria-label="Sign in">
+                        <GlassButton type="submit" size="icon" aria-label="Login">
                           <ArrowRight size={18} />
                         </GlassButton>
                       </div>
@@ -550,6 +523,13 @@ function Login() {
               )}
             </AnimatePresence>
           </form>
+
+          <p className="auth-switch">
+            Don't have an account?
+            <Link to="/register">
+              Create one
+            </Link>
+          </p>
 
         </fieldset>
       </div>

@@ -22,8 +22,8 @@ class Config:
     USE_GPU = True  # Automatically use CUDA if available
     
     # Risk thresholds
-    LOW_RISK_THRESHOLD = 35
-    MEDIUM_RISK_THRESHOLD = 70
+    LOW_RISK_THRESHOLD = 30
+    MEDIUM_RISK_THRESHOLD = 60
     
     # URL checking
     URL_TIMEOUT = 5  # seconds

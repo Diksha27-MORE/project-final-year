@@ -1,4 +1,5 @@
 import "./Footer.css";
+import { Link } from 'react-router-dom'
 
 function Footer() {
   return (
@@ -47,8 +48,8 @@ function Footer() {
         <div className="footer-column">
           <h4>Connect</h4>
           <a href="#contact">Contact</a>
-          <a href="#login">Login</a>
-          <a href="#register">Register</a>
+          <Link to="/login">Login</Link>
+          <Link to="/register">Create Account</Link>
         </div>
 
         {/* Legal */}

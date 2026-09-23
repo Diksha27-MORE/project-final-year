@@ -1,11 +1,46 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import '../App.css'
+import './Register.css'
+import { registerUser } from '../utils/userSession'
 
 function Register() {
-  return (
-    <div className="auth-page">
+  const navigate = useNavigate()
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-      {/* Left Side */}
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }))
+    if (error) setError('')
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      if (form.password !== form.confirmPassword) {
+        throw new Error('Passwords do not match.')
+      }
+
+      const result = await registerUser(form)
+      if (!result.success) {
+        throw new Error(result.error)
+      }
+
+      navigate('/login')
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="register-page">
+
       <div className="auth-brand">
 
         <div className="auth-logo">
@@ -39,23 +74,17 @@ function Register() {
 
       </div>
 
-
-      {/* Right Side */}
       <div className="auth-form-container">
 
-        <div className="auth-form">
+        <div className="register-form">
 
-          {/* Back to Home */}
           <Link to="/" className="back-home">
             ← Back to home
           </Link>
 
-
-          {/* Mobile Logo */}
           <div className="mobile-auth-logo">
             <span>Intern</span>Trust
           </div>
-
 
           <span className="auth-label">
             CREATE ACCOUNT
@@ -69,69 +98,68 @@ function Register() {
             Create your InternTrust account.
           </p>
 
-
-          {/* Register Form */}
-          <form>
-
-            {/* Name */}
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
-
               <label>
                 Full name
               </label>
-
               <input
                 type="text"
+                value={form.name}
+                onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="Your name"
               />
-
             </div>
 
-
-            {/* Email */}
             <div className="form-group">
-
               <label>
                 Email address
               </label>
-
               <input
                 type="email"
+                value={form.email}
+                onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="you@example.com"
               />
-
             </div>
 
-
-            {/* Password */}
             <div className="form-group">
-
               <label>
                 Password
               </label>
-
               <input
                 type="password"
+                value={form.password}
+                onChange={(e) => handleChange('password', e.target.value)}
                 placeholder="Create a password"
               />
-
             </div>
 
+            <div className="form-group">
+              <label>
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={form.confirmPassword}
+                onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                placeholder="Confirm your password"
+              />
+            </div>
 
-            {/* Create Account */}
+            {error && <p className="analyze-error">{error}</p>}
+
             <button
               type="submit"
               className="primary-btn auth-submit"
+              disabled={loading}
             >
-              Create account
+              {loading ? 'Creating account...' : 'Create account'}
               <span>→</span>
             </button>
-
           </form>
 
-
-          {/* Login Link */}
-          <p className="auth-switch">
+          <p className="register-switch">
             Already have an account?
 
             <Link to="/login">

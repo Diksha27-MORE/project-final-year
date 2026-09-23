@@ -1,11 +1,25 @@
-﻿.env
-.env.*
-!.env.example
-__pycache__/
-*.py[cod]
+﻿# Python
 .venv/
 venv/
-env/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment variables
+.env
+.env.*
+
+# Node
 node_modules/
-*.log
+
+# Vite build
+dist/
+
+
+# IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
+Thumbs.db

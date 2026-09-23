@@ -32,6 +32,12 @@ const NAV_ITEMS = [
     type: 'settings',
     path: '/login',
   },
+  {
+    key: 'register',
+    label: 'Create Account',
+    type: 'user',
+    path: '/register',
+  },
 ]
 
 const SCROLL_THRESHOLD = 8
@@ -301,7 +307,7 @@ function Navbar() {
     <nav
       className={`interntrust-floating-navbar ${
         scrolled ? 'is-scrolled' : ''
-      }`}
+      } ${!inHero ? 'is-hidden' : ''}`}
     >
       <div className="interntrust-floating-nav-inner">
 
