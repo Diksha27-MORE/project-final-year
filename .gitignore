@@ -5,6 +5,9 @@ __pycache__/
 *.py[cod]
 *.pyo
 
+# Local authentication database
+backend/data/interntrust_auth.sqlite3
+
 # Environment variables
 .env
 .env.*
@@ -14,7 +17,6 @@ node_modules/
 
 # Vite build
 dist/
-
 
 # IDE
 .vscode/
